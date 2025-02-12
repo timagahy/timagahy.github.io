@@ -4,171 +4,285 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Кликер и магазин скинов</title>
-    <script src="https://telegram.org/js/telegram-widget.js?7" 
-            data-telegram-login="ваш_бот_username" 
-            data-size="large" 
-            data-auth-url="https://ваш-сайт.com/auth" 
-            data-request-access="write"></script>
     <style>
-        /* Ваши стили */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #auth {
+            margin-top: 50px;
+        }
+        #app {
+            display: none;
+        }
+        #clicker {
+            margin: 20px;
+        }
+        #click-button {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #click-button:active {
+            background-color: #0056b3;
+        }
+        #score {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        #shop {
+            margin-top: 40px;
+        }
+        .skin-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+            display: inline-block;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .skin-item button {
+            padding: 5px 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .skin-item button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #clans, #friends, #leaderboard {
+            margin-top: 40px;
+        }
     </style>
 </head>
 <body>
-	<div id="auth">
-		<script async src="https://telegram.org/js/telegram-widget.js?7"
-            data-telegram-login="ваш_бот_username"
-            data-size="large"
-            data-auth-url="https://ваш-сайт.com/auth"
-            data-request-access="write"
-            onauth="onTelegramAuth(user)">
-		</script>
-</div>
-	<div id="app" style="display:none;">
-    <!-- Весь интерфейс приложения -->
-	</div>
+    <div id="auth">
+        <script async src="https://telegram.org/js/telegram-widget.js?7"
+                data-telegram-login="ваш_бот_username"
+                data-size="large"
+                data-auth-url="https://ваш-сайт.com/auth"
+                data-request-access="write"
+                onauth="onTelegramAuth(user)">
+        </script>
+    </div>
+    <div id="app">
+        <h1>Кликер и магазин скинов</h1>
+        <div id="clicker">
+            <button id="click-button">Кликни меня!</button>
+            <div id="score">Очки: 0</div>
+        </div>
+        <div id="shop">
+            <h2>Магазин скинов</h2>
+            <div class="skin-item" data-cost="10">
+                <p>Скин 1 (10 очков)</p>
+                <button onclick="buySkin(1)">Купить</button>
+            </div>
+            <div class="skin-item" data-cost="20">
+                <p>Скин 2 (20 очков)</p>
+                <button onclick="buySkin(2)">Купить</button>
+            </div>
+            <div class="skin-item" data-cost="50">
+                <p>Скин 3 (50 очков)</p>
+                <button onclick="buySkin(3)">Купить</button>
+            </div>
+        </div>
+        <div id="clans">
+            <h2>Кланы</h2>
+            <button onclick="createClan()">Создать клан</button>
+            <button onclick="joinClan()">Вступить в клан</button>
+            <div id="clan-info">
+                <p id="clan-name"></p>
+                <p id="clan-members"></p>
+            </div>
+        </div>
+        <div id="friends">
+            <h2>Друзья</h2>
+            <input type="text" id="friend-id" placeholder="ID друга">
+            <button onclick="addFriend()">Добавить друга</button>
+            <div id="friends-list"></div>
+        </div>
+        <div id="leaderboard">
+            <h2>Таблица лидеров</h2>
+            <div id="leaderboard-list"></div>
+        </div>
+    </div>
 
-	<script>
-		let currentUser = null;
+    <script>
+        let currentUser = null;
+        let score = 0;
+        const scoreElement = document.getElementById('score');
+        const clickButton = document.getElementById('click-button');
 
-		function onTelegramAuth(user) {
-			fetch('/auth', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(user),
-			})
-			.then(response => response.json())
-			.then(data => {
-				if (data.success) {
-				currentUser = data.user;
-					document.getElementById('auth').style.display = 'none';
-					document.getElementById('app').style.display = 'block';
-					loadUserData(data.user);
-				}
-			});
-		}
+        // Авторизация через Telegram
+        function onTelegramAuth(user) {
+            fetch('/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(user),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = data.user;
+                    document.getElementById('auth').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                    loadUserData(data.user);
+                }
+            });
+        }
 
-    function loadUserData(user) {
-        console.log('User data:', user);
-        // Загрузите данные пользователя (очки, скины, клан, друзья и т.д.)
-    }
-</script>
-	<div id="clans">
-		<h2>Кланы</h2>
-		<button onclick="createClan()">Создать клан</button>
-		<button onclick="joinClan()">Вступить в клан</button>
-		<div id="clan-info">
-			<p id="clan-name"></p>
-			<p id="clan-members"></p>
-		</div>
-	</div>
+        // Загрузка данных пользователя
+        function loadUserData(user) {
+            score = user.score || 0;
+            scoreElement.textContent = `Очки: ${score}`;
+            updateShopButtons();
+            loadClanInfo(user.clan);
+            loadFriends(user.friends);
+        }
 
-	<script>
-		function createClan() {
-			const clanName = prompt('Введите название клана:');
-			if (clanName) {
-				fetch('/createClan', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({ clanName, userId: currentUser.id }),
-				})
-				.then(response => response.json())
-				.then(data => {
-					if (data.success) {
-						alert('Клан создан!');
-						loadClanInfo(data.clan);
-					}
-				});
-		}
-		}
+        // Кликер
+        clickButton.addEventListener('click', () => {
+            score++;
+            scoreElement.textContent = `Очки: ${score}`;
+            updateShopButtons();
+            sendClick();
+        });
 
-		function joinClan() {
-			const clanId = prompt('Введите ID клана:');
-			if (clanId) {
-					fetch('/joinClan', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({ clanId, userId: currentUser.id }),
-				})
-				.then(response => response.json())
-				.then(data => {
-					if (data.success) {
-						alert('Вы вступили в клан!');
-						loadClanInfo(data.clan);
-					}
-				});
-			}
-		}
+        // Магазин скинов
+        function buySkin(skinId) {
+            const skinItem = document.querySelector(`.skin-item[data-cost]`);
+            const cost = parseInt(skinItem.getAttribute('data-cost'));
 
-		function loadClanInfo(clan) {
-			document.getElementById('clan-name').textContent = `Название: ${clan.name}`;
-			document.getElementById('clan-members').textContent = `Участники: ${clan.members.join(', ')}`;
-		}
-</script>
-	<div id="friends">
-		<h2>Друзья</h2>
-		<input type="text" id="friend-id" placeholder="ID друга">
-		<button onclick="addFriend()">Добавить друга</button>
-		<div id="friends-list"></div>
-	</div>
+            if (score >= cost) {
+                score -= cost;
+                scoreElement.textContent = `Очки: ${score}`;
+                alert(`Вы купили скин ${skinId}!`);
+                updateShopButtons();
+            } else {
+                alert('Недостаточно очков!');
+            }
+        }
 
-	<script>
-		function addFriend() {
-			const friendId = document.getElementById('friend-id').value;
-			if (friendId) {
-				fetch('/addFriend', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({ userId: currentUser.id, friendId }),
-				})
-				.then(response => response.json())
-				.then(data => {
-					if (data.success) {
-						alert('Друг добавлен!');
-						loadFriends(data.friends);
-					}
-				});
-			}
-		}
+        function updateShopButtons() {
+            const skinItems = document.querySelectorAll('.skin-item');
+            skinItems.forEach(item => {
+                const cost = parseInt(item.getAttribute('data-cost'));
+                const button = item.querySelector('button');
+                button.disabled = score < cost;
+            });
+        }
 
-    function loadFriends(friends) {
-        document.getElementById('friends-list').innerHTML = `
-            <p>Друзья: ${friends.join(', ')}</p>
-        `;
-    }
-</script>
-	<div id="leaderboard">
-		<h2>Таблица лидеров</h2>
-		<div id="leaderboard-list"></div>
-	</div>
+        // Кланы
+        function createClan() {
+            const clanName = prompt('Введите название клана:');
+            if (clanName) {
+                fetch('/createClan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ clanName, userId: currentUser.id }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Клан создан!');
+                        loadClanInfo(data.clan);
+                    }
+                });
+            }
+        }
 
-	<script>
-		const socket = new WebSocket('wss://ваш-сайт.com/socket');
+        function joinClan() {
+            const clanId = prompt('Введите ID клана:');
+            if (clanId) {
+                fetch('/joinClan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ clanId, userId: currentUser.id }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Вы вступили в клан!');
+                        loadClanInfo(data.clan);
+                    }
+                });
+            }
+        }
 
-		socket.onmessage = (event) => {
-			const data = JSON.parse(event.data);
-			if (data.type === 'click') {
-				updateLeaderboard(data.leaderboard);
-			}
-		};
+        function loadClanInfo(clan) {
+            if (clan) {
+                document.getElementById('clan-name').textContent = `Название: ${clan.name}`;
+                document.getElementById('clan-members').textContent = `Участники: ${clan.members.join(', ')}`;
+            }
+        }
 
-		function sendClick() {
-			socket.send(JSON.stringify({ type: 'click', userId: currentUser.id }));
-		}
+        // Друзья
+        function addFriend() {
+            const friendId = document.getElementById('friend-id').value;
+            if (friendId) {
+                fetch('/addFriend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: currentUser.id, friendId }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Друг добавлен!');
+                        loadFriends(data.friends);
+                    }
+                });
+            }
+        }
 
-		function updateLeaderboard(leaderboard) {
-			const leaderboardList = document.getElementById('leaderboard-list');
-			leaderboardList.innerHTML = Object.entries(leaderboard)
-				.map(([userId, score]) => `<p>${userId}: ${score} кликов</p>`)
-				.join('');
-		}
-	</script>
+        function loadFriends(friends) {
+            document.getElementById('friends-list').innerHTML = `
+                <p>Друзья: ${friends.join(', ')}</p>
+            `;
+        }
+
+        // Мультиплеер (WebSocket)
+        const socket = new WebSocket('wss://ваш-сайт.com/socket');
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'click') {
+                updateLeaderboard(data.leaderboard);
+            }
+        };
+
+        function sendClick() {
+            socket.send(JSON.stringify({ type: 'click', userId: currentUser.id }));
+        }
+
+        function updateLeaderboard(leaderboard) {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = Object.entries(leaderboard)
+                .map(([userId, score]) => `<p>${userId}: ${score} кликов</p>`)
+                .join('');
+        }
+    </script>
 </body>
+</html>
 </html>

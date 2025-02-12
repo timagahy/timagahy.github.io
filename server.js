@@ -1,13 +1,17 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const app = express();
+const WebSocket = require('ws');
 
+const app = express();
 app.use(bodyParser.json());
 
-// Хранение пользователей (временное, лучше использовать базу данных)
-let users = [];
+// Временное хранилище данных (лучше использовать базу данных, например, MongoDB или PostgreSQL)
+let users = []; // Пользователи
+let clans = []; // Кланы
+let leaderboard = {}; // Таблица лидеров
 
+// Авторизация через Telegram
 app.post('/auth', (req, res) => {
     const user = req.body;
     const checkHash = user.hash;
@@ -33,10 +37,7 @@ app.post('/auth', (req, res) => {
     }
 });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
-
-let clans = [];
-
+// Создание клана
 app.post('/createClan', (req, res) => {
     const { clanName, userId } = req.body;
     const newClan = { id: clans.length + 1, name: clanName, members: [userId] };
@@ -44,6 +45,7 @@ app.post('/createClan', (req, res) => {
     res.json({ success: true, clan: newClan });
 });
 
+// Вступление в клан
 app.post('/joinClan', (req, res) => {
     const { clanId, userId } = req.body;
     const clan = clans.find(c => c.id === clanId);
@@ -55,6 +57,7 @@ app.post('/joinClan', (req, res) => {
     }
 });
 
+// Добавление друга
 app.post('/addFriend', (req, res) => {
     const { userId, friendId } = req.body;
     const user = users.find(u => u.id === userId);
@@ -68,16 +71,19 @@ app.post('/addFriend', (req, res) => {
     }
 });
 
-const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 8080 });
+// Запуск HTTP-сервера
+const server = app.listen(3000, () => console.log('HTTP Server running on port 3000'));
 
-let leaderboard = {};
+// WebSocket для мультиплеера
+const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
     ws.on('message', (message) => {
         const data = JSON.parse(message);
         if (data.type === 'click') {
             leaderboard[data.userId] = (leaderboard[data.userId] || 0) + 1;
+
+            // Отправляем обновленную таблицу лидеров всем клиентам
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify({ type: 'click', leaderboard }));
