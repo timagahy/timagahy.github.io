@@ -3,39 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мини-игра в Telegram</title>
+    <title>Кликер и магазин скинов</title>
+    <script src="https://telegram.org/js/telegram-widget.js?7" 
+            data-telegram-login="ваш_бот_username" 
+            data-size="large" 
+            data-auth-url="https://ваш-сайт.com/auth" 
+            data-request-access="write"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-        }
+        /* Ваши стили */
     </style>
 </head>
 <body>
-    <h1>Угадай число</h1>
-    <p>Я загадал число от 1 до 10. Попробуй угадать!</p>
-    <input type="number" id="guess" min="1" max="10">
-    <button onclick="checkGuess()">Проверить</button>
-    <p id="result"></p>
+	<div id="auth">
+		<script async src="https://telegram.org/js/telegram-widget.js?7"
+            data-telegram-login="ваш_бот_username"
+            data-size="large"
+            data-auth-url="https://ваш-сайт.com/auth"
+            data-request-access="write"
+            onauth="onTelegramAuth(user)">
+		</script>
+</div>
+	<div id="app" style="display:none;">
+    <!-- Весь интерфейс приложения -->
+	</div>
 
-    <script>
-        const secretNumber = Math.floor(Math.random() * 10) + 1;
+	<script>
+		let currentUser = null;
 
-        function checkGuess() {
-            const guess = parseInt(document.getElementById('guess').value);
-            const result = document.getElementById('result');
+		function onTelegramAuth(user) {
+			fetch('/auth', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(user),
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+				currentUser = data.user;
+					document.getElementById('auth').style.display = 'none';
+					document.getElementById('app').style.display = 'block';
+					loadUserData(data.user);
+				}
+			});
+		}
 
-            if (guess === secretNumber) {
-                result.textContent = "Поздравляю! Вы угадали!";
-            } else {
-                result.textContent = "Не угадали. Попробуйте еще раз!";
-            }
-        }
-    </script>
+    function loadUserData(user) {
+        console.log('User data:', user);
+        // Загрузите данные пользователя (очки, скины, клан, друзья и т.д.)
+    }
+</script>
+	<div id="clans">
+		<h2>Кланы</h2>
+		<button onclick="createClan()">Создать клан</button>
+		<button onclick="joinClan()">Вступить в клан</button>
+		<div id="clan-info">
+			<p id="clan-name"></p>
+			<p id="clan-members"></p>
+		</div>
+	</div>
+
+	<script>
+		function createClan() {
+			const clanName = prompt('Введите название клана:');
+			if (clanName) {
+				fetch('/createClan', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ clanName, userId: currentUser.id }),
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						alert('Клан создан!');
+						loadClanInfo(data.clan);
+					}
+				});
+		}
+		}
+
+		function joinClan() {
+			const clanId = prompt('Введите ID клана:');
+			if (clanId) {
+					fetch('/joinClan', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ clanId, userId: currentUser.id }),
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						alert('Вы вступили в клан!');
+						loadClanInfo(data.clan);
+					}
+				});
+			}
+		}
+
+		function loadClanInfo(clan) {
+			document.getElementById('clan-name').textContent = `Название: ${clan.name}`;
+			document.getElementById('clan-members').textContent = `Участники: ${clan.members.join(', ')}`;
+		}
+</script>
+	<div id="friends">
+		<h2>Друзья</h2>
+		<input type="text" id="friend-id" placeholder="ID друга">
+		<button onclick="addFriend()">Добавить друга</button>
+		<div id="friends-list"></div>
+	</div>
+
+	<script>
+		function addFriend() {
+			const friendId = document.getElementById('friend-id').value;
+			if (friendId) {
+				fetch('/addFriend', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ userId: currentUser.id, friendId }),
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						alert('Друг добавлен!');
+						loadFriends(data.friends);
+					}
+				});
+			}
+		}
+
+    function loadFriends(friends) {
+        document.getElementById('friends-list').innerHTML = `
+            <p>Друзья: ${friends.join(', ')}</p>
+        `;
+    }
+</script>
+	<div id="leaderboard">
+		<h2>Таблица лидеров</h2>
+		<div id="leaderboard-list"></div>
+	</div>
+
+	<script>
+		const socket = new WebSocket('wss://ваш-сайт.com/socket');
+
+		socket.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+			if (data.type === 'click') {
+				updateLeaderboard(data.leaderboard);
+			}
+		};
+
+		function sendClick() {
+			socket.send(JSON.stringify({ type: 'click', userId: currentUser.id }));
+		}
+
+		function updateLeaderboard(leaderboard) {
+			const leaderboardList = document.getElementById('leaderboard-list');
+			leaderboardList.innerHTML = Object.entries(leaderboard)
+				.map(([userId, score]) => `<p>${userId}: ${score} кликов</p>`)
+				.join('');
+		}
+	</script>
 </body>
 </html>
