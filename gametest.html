@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мини-игра в Telegram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Угадай число</h1>
+    <p>Я загадал число от 1 до 10. Попробуй угадать!</p>
+    <input type="number" id="guess" min="1" max="10">
+    <button onclick="checkGuess()">Проверить</button>
+    <p id="result"></p>
+
+    <script>
+        const secretNumber = Math.floor(Math.random() * 10) + 1;
+
+        function checkGuess() {
+            const guess = parseInt(document.getElementById('guess').value);
+            const result = document.getElementById('result');
+
+            if (guess === secretNumber) {
+                result.textContent = "Поздравляю! Вы угадали!";
+            } else {
+                result.textContent = "Не угадали. Попробуйте еще раз!";
+            }
+        }
+    </script>
+</body>
+</html>
