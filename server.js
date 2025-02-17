@@ -2,9 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const path = require('path'); // Добавлен модуль path для работы с путями
 
 const app = express();
 app.use(bodyParser.json());
+
+// Указываем, что статические файлы находятся в папке "public"
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Временное хранилище данных (лучше использовать базу данных, например, MongoDB или PostgreSQL)
 let users = []; // Пользователи
@@ -79,6 +83,11 @@ app.post('/addFriend', (req, res) => {
     } else {
         res.json({ success: false, error: 'Пользователь не найден' });
     }
+});
+
+// Обработчик для корневого пути (/)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Запуск HTTP-сервера
