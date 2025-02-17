@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const WebSocket = require('ws');
-const path = require('path'); // Добавлен модуль path для работы с путями
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
