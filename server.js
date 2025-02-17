@@ -26,12 +26,22 @@ app.post('/auth', (req, res) => {
     const hash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
     if (hash === checkHash) {
+        // Если у пользователя нет username, используем first_name или id
+        const userDisplayName = user.username || user.first_name || `User_${user.id}`;
+
         // Сохранение пользователя
         const existingUser = users.find(u => u.id === user.id);
         if (!existingUser) {
-            users.push({ ...user, score: 0, skins: [], friends: [], clan: null });
+            users.push({ 
+                ...user, 
+                username: userDisplayName, // Используем displayName
+                score: 0, 
+                skins: [], 
+                friends: [], 
+                clan: null 
+            });
         }
-        res.json({ success: true, user: existingUser || user });
+        res.json({ success: true, user: existingUser || { ...user, username: userDisplayName } });
     } else {
         res.json({ success: false, error: 'Invalid data' });
     }
